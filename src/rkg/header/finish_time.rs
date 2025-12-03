@@ -2,6 +2,7 @@ pub struct FinishTime {
     minutes: u8, 			// 7 bits, offset 0x00
     seconds: u8,			// 7 bits, offset 0x00.7
     milliseconds: u16,		// 10 bits, offset 0x01.6
+    string: String          // Total time as string
 }
 
 impl FinishTime {
@@ -17,15 +18,16 @@ impl FinishTime {
         self.milliseconds
     }
 
-    pub fn string(&self) -> String {
-        format!("{:02}:{:02}.{:03}", self.minutes(), self.seconds(), self.milliseconds())
+    pub fn string(&self) -> &str {
+        &self.string
     }
 
-    pub fn new(minutes: u8, seconds: u8, milliseconds: u16) -> FinishTime {
-        FinishTime {
+    pub fn new(minutes: u8, seconds: u8, milliseconds: u16) -> Self {
+        Self {
             minutes,
             seconds,
             milliseconds,
+            string: format!("{:02}:{:02}.{:03}", minutes, seconds, milliseconds),
         }
     }
 }
