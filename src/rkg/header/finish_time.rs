@@ -1,8 +1,8 @@
 pub struct FinishTime {
-    minutes: u8, 			// 7 bits, offset 0x00
-    seconds: u8,			// 7 bits, offset 0x00.7
-    milliseconds: u16,		// 10 bits, offset 0x01.6
-    string: String          // Total time as string
+    minutes: u8,       // 7 bits, offset 0x00
+    seconds: u8,       // 7 bits, offset 0x00.7
+    milliseconds: u16, // 10 bits, offset 0x01.6
+    string: String,    // Total time as string
 }
 
 impl FinishTime {
