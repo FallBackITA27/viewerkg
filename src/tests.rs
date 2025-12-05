@@ -112,5 +112,5 @@ fn test_rkg_header() {
 
     assert_eq!(header.mii_data().creator_name(), "JC");
 
-    assert_eq!(header.mii_crc16(), 1780);
+    assert_eq!(header.mii_crc16(), 0x06F4);
 }
