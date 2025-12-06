@@ -43,23 +43,18 @@ pub enum HeaderError {
 pub struct Header {
     finish_time: FinishTime,
     slot_id: SlotId,
-    unknown1: u8,
     combo: Combo,
     date_set: Date,
     controller: Controller,
-    unknown2: u8,
     is_compressed: bool,
-    unknown3: u8,
     ghost_type: GhostType,
     is_automatic_drift: bool,
-    unknown4: bool,
     decompressed_input_data_length: u16,
     lap_count: u8,
     lap_split_times: Vec<FinishTime>,
     country_code: u8,
     state_code: u8,
     location_code: u16,
-    unknown6: u32,
     mii_data: Mii,
     mii_crc16: u16,
 }
@@ -77,24 +72,24 @@ impl Header {
         let finish_time = FinishTime::try_from(&mut header_reader)?;
         let slot_id = SlotId::try_from(&mut header_reader)?;
 
-        let unknown1 = header_reader.read_u8(2)?; // Padding
+        header_reader.skip(2)?; // Padding
 
         let combo = Combo::try_from(&mut header_reader)?;
         let date_set = Date::try_from(&mut header_reader)?;
         let controller = Controller::try_from(&mut header_reader)?;
 
-        let unknown2 = header_reader.read_u8(4)?;
+        header_reader.skip(4)?;
 
         let is_compressed = header_reader
             .read_bool()
             .expect("Failed to read is_compressed");
 
-        let unknown3 = header_reader.read_u8(2)?;
+        header_reader.skip(2)?;
         let ghost_type = GhostType::try_from(&mut header_reader)?;
 
         let is_automatic_drift = header_reader.read_bool()?;
 
-        let unknown4 = header_reader.read_bool()?;
+        header_reader.skip(1)?;
 
         let decompressed_input_data_length = header_reader.read_u16(16)?;
 
@@ -113,7 +108,7 @@ impl Header {
 
         let location_code = header_reader.read_u16(16)?;
 
-        let unknown6 = header_reader.read_u32(32)?;
+        header_reader.skip(32)?;
         let mii_data = Mii::new(&header_data[0x3C..0x86]).expect("Failed to read Mii");
 
         // Skip current reader over mii data (Mii constructor uses its own reader)
@@ -126,23 +121,18 @@ impl Header {
         Ok(Self {
             finish_time,
             slot_id,
-            unknown1,
             combo,
             date_set,
             controller,
-            unknown2,
             is_compressed,
-            unknown3,
             ghost_type,
             is_automatic_drift,
-            unknown4,
             decompressed_input_data_length,
             lap_count,
             lap_split_times,
             country_code,
             state_code,
             location_code,
-            unknown6,
             mii_data,
             mii_crc16,
         })
@@ -154,10 +144,6 @@ impl Header {
 
     pub fn slot_id(&self) -> SlotId {
         self.slot_id
-    }
-
-    pub fn unknown1(&self) -> u8 {
-        self.unknown1
     }
 
     pub fn combo(&self) -> &Combo {
@@ -172,16 +158,8 @@ impl Header {
         self.controller
     }
 
-    pub fn unknown2(&self) -> u8 {
-        self.unknown2
-    }
-
     pub fn is_compressed(&self) -> bool {
         self.is_compressed
-    }
-
-    pub fn unknown3(&self) -> u8 {
-        self.unknown3
     }
 
     pub fn ghost_type(&self) -> GhostType {
@@ -190,10 +168,6 @@ impl Header {
 
     pub fn is_automatic_drift(&self) -> bool {
         self.is_automatic_drift
-    }
-
-    pub fn unknown4(&self) -> bool {
-        self.unknown4
     }
 
     pub fn decompressed_input_data_length(&self) -> u16 {
@@ -218,10 +192,6 @@ impl Header {
 
     pub fn location_code(&self) -> u16 {
         self.location_code
-    }
-
-    pub fn unknown6(&self) -> u32 {
-        self.unknown6
     }
 
     pub fn mii_data(&self) -> &Mii {
