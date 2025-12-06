@@ -1,6 +1,3 @@
-// TODO: Once RKG struct is defined in lib.rs, move this to tests/ in the root directory
-// TODO: Once more test files are gathered, write more tests
-
 use crate::header::{
     Header,
     combo::{Character, Vehicle},
