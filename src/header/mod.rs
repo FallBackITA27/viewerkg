@@ -22,6 +22,8 @@ pub mod slot_id;
 pub enum HeaderError {
     #[error("File is not RKGD")]
     NotRKGD,
+    #[error("Data passed is not correct size (0x88)")]
+    NotCorrectSize,
     #[error("BitReader Error: {0}")]
     BitReaderError(#[from] bitreader::BitReaderError),
     #[error("Finish Time Error: {0}")]
@@ -63,61 +65,64 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn new(rkg_data: &[u8]) -> Result<Self, HeaderError> {
-        let mut rkg_reader = BitReader::new(rkg_data);
+    pub fn new(header_data: &[u8]) -> Result<Self, HeaderError> {
+        let mut header_reader = BitReader::new(header_data);
 
-        if rkg_reader.read_u32(32)? != 0x524B4744 {
+        if header_reader.read_u32(32)? != 0x524B4744 {
             return Err(HeaderError::NotRKGD);
         }
+        else if header_data.len() != 0x88 {
+            return Err(HeaderError::NotCorrectSize);
+        }
 
-        let finish_time = FinishTime::try_from(&mut rkg_reader)?;
-        let slot_id = SlotId::try_from(&mut rkg_reader)?;
+        let finish_time = FinishTime::try_from(&mut header_reader)?;
+        let slot_id = SlotId::try_from(&mut header_reader)?;
 
-        let unknown1 = rkg_reader.read_u8(2)?; // Padding
+        let unknown1 = header_reader.read_u8(2)?; // Padding
 
-        let combo = Combo::try_from(&mut rkg_reader)?;
-        let date_set = Date::try_from(&mut rkg_reader)?;
-        let controller = Controller::try_from(&mut rkg_reader)?;
+        let combo = Combo::try_from(&mut header_reader)?;
+        let date_set = Date::try_from(&mut header_reader)?;
+        let controller = Controller::try_from(&mut header_reader)?;
 
-        let unknown2 = rkg_reader.read_u8(4)?;
+        let unknown2 = header_reader.read_u8(4)?;
 
-        let is_compressed = rkg_reader
+        let is_compressed = header_reader
             .read_bool()
             .expect("Failed to read is_compressed");
 
-        let unknown3 = rkg_reader.read_u8(2)?;
-        let ghost_type = GhostType::try_from(&mut rkg_reader)?;
+        let unknown3 = header_reader.read_u8(2)?;
+        let ghost_type = GhostType::try_from(&mut header_reader)?;
 
-        let is_automatic_drift = rkg_reader.read_bool()?;
+        let is_automatic_drift = header_reader.read_bool()?;
 
-        let unknown4 = rkg_reader.read_bool()?;
+        let unknown4 = header_reader.read_bool()?;
 
-        let decompressed_input_data_length = rkg_reader.read_u16(16)?;
+        let decompressed_input_data_length = header_reader.read_u16(16)?;
 
-        let lap_count = rkg_reader.read_u8(8)?;
+        let lap_count = header_reader.read_u8(8)?;
 
         let mut lap_split_times: Vec<FinishTime> = Vec::with_capacity(8);
         for _ in 1..=9 {
-            lap_split_times.push(FinishTime::try_from(&mut rkg_reader)?);
+            lap_split_times.push(FinishTime::try_from(&mut header_reader)?);
         }
 
         // Skip garbage RAM data
-        rkg_reader.skip(64)?;
+        header_reader.skip(64)?;
 
-        let country_code = rkg_reader.read_u8(8)?;
-        let state_code = rkg_reader.read_u8(8)?;
+        let country_code = header_reader.read_u8(8)?;
+        let state_code = header_reader.read_u8(8)?;
 
-        let location_code = rkg_reader.read_u16(16)?;
+        let location_code = header_reader.read_u16(16)?;
 
-        let unknown6 = rkg_reader.read_u32(32)?;
-        let mii_data = Mii::new(&rkg_data[0x3C..0x86]).expect("Failed to read Mii");
+        let unknown6 = header_reader.read_u32(32)?;
+        let mii_data = Mii::new(&header_data[0x3C..0x86]).expect("Failed to read Mii");
 
         // Skip current reader over mii data (Mii constructor uses its own reader)
         for _ in 1..=74 {
-            rkg_reader.skip(8)?;
+            header_reader.skip(8)?;
         }
 
-        let mii_crc16 = rkg_reader.read_u16(16)?;
+        let mii_crc16 = header_reader.read_u16(16)?;
 
         Ok(Self {
             finish_time,

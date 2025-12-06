@@ -19,7 +19,7 @@ fn test_rkg_header() {
         .read_to_end(&mut rkg_data)
         .expect("Couldn't read bytes in file");
 
-    let header: Header = Header::new(&rkg_data).expect("Couldn't read header");
+    let header: Header = Header::new(&rkg_data[0x00..0x88]).expect("Couldn't read header");
 
     // General ghost info
     assert_eq!(header.finish_time().minutes(), 1);
